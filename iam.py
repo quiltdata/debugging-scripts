@@ -29,7 +29,7 @@ def extract_user_from_arn(arn):
 
 
 def extract_assumed_role_from_arn(arn):
-    role_and_session = arn.split(":assumer-role/")[1]
+    role_and_session = arn.split(":assumed-role/")[1]
     role, session = role_and_session.split("/")
     return role
 
