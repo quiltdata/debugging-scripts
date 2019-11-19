@@ -1,5 +1,7 @@
 import json
 import random
+import sys
+import traceback
 import uuid
 
 import quilt3
@@ -364,7 +366,12 @@ def main(package_name="quilt-debug/test", bucket="armand-staging-t4"):
 
 
 
-
+def safe_main(package_name="quilt-debug/test", bucket="armand-staging-t4"):
+    try:
+        main(package_name, bucket)
+    except Exception as ex:
+        traceback.print_stack(file=sys.stdout)
+        print("Uncaught exception caused exit from main():", ex)
 
 
 
@@ -375,4 +382,4 @@ def main(package_name="quilt-debug/test", bucket="armand-staging-t4"):
 
 
 if __name__ == '__main__':
-    main()
+    safe_main()
