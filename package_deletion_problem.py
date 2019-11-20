@@ -1,6 +1,7 @@
 import json
 import random
 import sys
+import time
 import traceback
 import uuid
 
@@ -125,6 +126,7 @@ def get_info_about_key(bucket, key):
 
 
 def generate_new_package_version(package_name, registry_name, push_dest):
+    time.sleep(2) # named_packages is timestamp based - ensure that we get a fresh timestamp
     fn_info = FunctionReporter(f"Creating package '{package_name}' in registry {registry_name}")
     try:
         pkg = quilt3.Package()
@@ -136,13 +138,7 @@ def generate_new_package_version(package_name, registry_name, push_dest):
 
 
 
-def cleanup(bucket, package_name):
-    """
-    Wipe tmp-data location
-    Wipe namedPackage entries
-    Wipe underlying manifests
-    """
-    raise NotImplementedError
+
 
 
 def check_normal_creds_can_create_and_delete_random_file(bucket, key):
