@@ -383,37 +383,43 @@ def main(package_name, bucket):
     try:
         s3_client = s3.get_s3_client(use_quilt3_botocore_session=False)
 
-        print(f"Deleting all keys in s3://{bucket}/{push_dest_key_prefix}*")
+        fn_info = FunctionReporter(f"Deleting all keys in s3://{bucket}/{push_dest_key_prefix}*")
         try:
             s3.empty_keyspace(s3_client, bucket, push_dest_key_prefix)
+            fn_info.succeeded(None)
         except Exception as ex:
-            print("Exception occurred:", ex)
+            fn_info.failed(ex)
+
 
         manifest_pointer_prefix = f".quilt/named_packages/{package_name}/"
         for manifest_pointer_object in s3.list_keyspace(s3_client, bucket, prefix=manifest_pointer_prefix):
             manifest_pointer_key = manifest_pointer_object["Key"]
 
             raw_manifest_hash = None
-            print(f"Trying to get contents of manifest pointer s3://{bucket}/{manifest_pointer_key}")
+            fn_info = FunctionReporter(f"Trying to get contents of manifest pointer s3://{bucket}/{manifest_pointer_key}")
             try:
                 raw_manifest_hash = s3.get_object_as_string(s3_client, bucket, manifest_pointer_key)
+                fn_info.succeeded(raw_manifest_hash)
             except Exception as ex:
-                print("Exception occurred:", ex)
+                fn_info.failed(ex)
 
-            print(f"Trying to delete manifest_pointer: s3://{bucket}/{manifest_pointer_key}")
+            fn_info = FunctionReporter(f"Trying to delete manifest_pointer: s3://{bucket}/{manifest_pointer_key}")
             try:
-                s3.delete_object(s3_client, bucket, manifest_pointer_key)
+                delete_response = s3.delete_object(s3_client, bucket, manifest_pointer_key)
+                fn_info.succeeded(delete_response)
             except Exception as ex:
-                print("Exception occurred:", ex)
+                fn_info.failed(ex)
+
 
             if raw_manifest_hash is not None:
                 raw_manifest_key = f".quilt/packages/{raw_manifest_hash}"
 
-                print(f"Trying to delete raw_manifest: s3://{bucket}/{raw_manifest_key}")
+                fn_info = FunctionReporter(f"Trying to delete raw_manifest: s3://{bucket}/{raw_manifest_key}")
                 try:
-                    s3.delete_object(s3_client, bucket, raw_manifest_key)
+                    delete_response = s3.delete_object(s3_client, bucket, raw_manifest_key)
+                    fn_info.succeeded(delete_response)
                 except Exception as ex:
-                    print("Exception occurred:", ex)
+                    fn_info.failed(ex)
 
 
 
