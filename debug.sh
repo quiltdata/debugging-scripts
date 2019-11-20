@@ -3,7 +3,7 @@
 set -e
 
 quilt3 logout
-mkdir -p
+mkdir -p quilt-tmp
 echo "QUILT-DEBUG: Cloning debugger script repo"
 git clone https://github.com/quiltdata/debugging-scripts quilt-tmp/debugging-scripts
 cd quilt-tmp
