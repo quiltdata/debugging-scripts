@@ -136,7 +136,12 @@ def generate_new_package_version(package_name, registry_name, push_dest):
 
 
 
-def cleanup():
+def cleanup(bucket, package_name):
+    """
+    Wipe tmp-data location
+    Wipe namedPackage entries
+    Wipe underlying manifests
+    """
     raise NotImplementedError
 
 
@@ -308,7 +313,8 @@ def main(package_name, bucket):
            retrieved from session.get_botocore_session. Record information about the permissions.
     """
     registry_name = f"s3://{bucket}"
-    push_dest = f"{registry_name}/quilt-tmp"
+    push_dest_key_prefix = "quilt-tmp"
+    push_dest = f"{registry_name}/{push_dest_key_prefix}"
     manifest_pointer_s3_key = f"{registry_name}./quilt/named_packages/{package_name}/latest"
     test_file_s3_key = "quilt-debug-tmp/tmpfile"
 
@@ -359,7 +365,36 @@ def main(package_name, bucket):
 
 
     header("Trying to clean up any leftover files")
-    cleanup()
+    try:
+        s3_client = s3.get_s3_client(use_quilt3_botocore_session=False)
+
+        print(f"Deleting all keys in s3://{bucket}/{push_dest_key_prefix}*")
+        try:
+            s3.empty_keyspace(s3_client, bucket, push_dest_key_prefix)
+        except Exception as ex:
+            print("Exception occurred:", ex)
+
+        manifest_pointer_prefix = f".quilt/named_packages/{package_name}/"
+        for manifest_pointer_object in s3.list_keyspace(s3_client, bucket, prefix=manifest_pointer_prefix):
+            manifest_pointer_key = manifest_pointer_object["Key"]
+            raw_manifest_hash = s3.get_object_as_string(s3_client, bucket, manifest_pointer_key)
+            raw_manifest_key = f".quilt/packages/{raw_manifest_hash}"
+
+            print(f"Trying to delete raw_manifest: s3://{bucket}/{raw_manifest_key}")
+            try:
+                s3.delete_object(s3_client, bucket, raw_manifest_key)
+            except Exception as ex:
+                print("Exception occurred:", ex)
+
+            print(f"Trying to delete manifest_pointer: s3://{bucket}/{manifest_pointer_key}")
+            try:
+                s3.delete_object(s3_client, bucket, manifest_pointer_key)
+            except Exception as ex:
+                print("Exception occurred:", ex)
+
+    except Exception as ex:
+        print("Cleanup failed with exception:", ex)
+
 
 
 
