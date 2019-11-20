@@ -72,6 +72,10 @@ def get_object(s3_client, bucket, key, version_id=None):
     return response
 
 
+def get_object_as_string(s3_client, bucket, key, version_id=None):
+    response = get_object(s3_client, bucket, key, version_id=version_id)
+    return response["Body"].read().decode("utf-8")
+
 
 def get_json(s3_client, bucket, key, version_id=None):
     response = get_object(s3_client, bucket, key, version_id=version_id)
@@ -85,8 +89,47 @@ def delete_object(s3_client, bucket, key):
     return response
 
 
-def list_keyspace(bucket, s3_prefix):
-    pass
+# Blocks until all/limit objects have been listed
+def list_keyspace(s3_client, bucket, prefix=None, limit=None):
+    objects = []
 
-def empty_keyspace(bucket, s3_prefix):
-    pass
+    if prefix is None:
+        response = s3_client.list_objects_v2(Bucket=bucket)
+    else:
+        response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+
+    if response["KeyCount"] == 0:
+        return []
+
+    objects += response["Contents"]
+    if limit is not None:
+        if len(objects) >= limit:
+            return objects[:limit]
+
+    while response["IsTruncated"]:
+        continuation_token = response["ContinuationToken"]
+
+        if prefix is None:
+            response = s3_client.list_objects_v2(
+                    Bucket=bucket,
+                    ContinuationToken=continuation_token
+            )
+        else:
+            response = s3_client.list_objects_v2(
+                    Bucket=bucket,
+                    Prefix=prefix,
+                    ContinuationToken=continuation_token,
+            )
+        if response["KeyCount"] > 0:
+            objects += response["Contents"]
+            if limit is not None:
+                if len(objects) >= limit:
+                    return objects[:limit]
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.list_objects_v2
+    return objects
+
+def empty_keyspace(s3_client, bucket, s3_prefix):
+    keys = [o["Key"] for o in list_keyspace(s3_client, bucket, prefix=s3_prefix)]
+    for key in keys:
+        delete_object(s3_client, bucket, key)
+
