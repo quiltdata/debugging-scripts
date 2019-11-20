@@ -7,6 +7,8 @@ mkdir -p quilt-tmp
 echo "QUILT-DEBUG: Cloning debugger script repo"
 git clone https://github.com/quiltdata/debugging-scripts quilt-tmp/debugging-scripts
 cd quilt-tmp
+echo "QUILT-DEBUG: ls after cd quilt-tmp/"
+ls
 echo "QUILT-DEBUG: Running python code that debugs"
 python package_deletion_problem.py > quilt-pkg-delete-debug.log 2> /dev/null
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
