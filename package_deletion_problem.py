@@ -383,7 +383,7 @@ def main(package_name, bucket):
     try:
         s3_client = s3.get_s3_client(use_quilt3_botocore_session=False)
 
-        fn_info = FunctionReporter(f"Deleting all keys in s3://{bucket}/{push_dest_key_prefix}*")
+        fn_info = FunctionReporter(f"Deleting all keys in s3://{bucket}/{push_dest_key_prefix}")
         try:
             s3.empty_keyspace(s3_client, bucket, push_dest_key_prefix)
             fn_info.succeeded(None)
