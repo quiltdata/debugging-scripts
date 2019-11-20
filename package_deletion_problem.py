@@ -128,7 +128,7 @@ def generate_new_package_version(package_name, registry_name, push_dest):
     fn_info = FunctionReporter(f"Creating package '{package_name}' in registry {registry_name}")
     try:
         pkg = quilt3.Package()
-        pkg.set(f"test-{uuid.uuid4()}", pd.DataFrame(range(random.randint(0, 100_000))))
+        pkg.set(f"test-{uuid.uuid4()}", pd.DataFrame(list(range(random.randint(0, 100_000)))))
         pkg.push(package_name, registry=registry_name, dest=push_dest)
         fn_info.succeeded(output=None)
     except Exception as ex:
