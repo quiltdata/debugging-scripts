@@ -261,23 +261,44 @@ def repro(package_name, registry_name, push_dest):
 
 
 def check_can_delete_manifest(s3_client, package_name, registry_name, push_dest):
-    print("Attempting to delete package manifest file directly")
+    print("Attempting to delete package manifest pointer and raw manifest directly")
 
     generate_new_package_version(package_name, registry_name, push_dest)
 
     manifest_pointer_s3_key = f".quilt/named_packages/{package_name}/latest"
     manifest_pointer_s3_bucket = registry_name.lstrip("s3://").rstrip("/")
+    raw_manifest_hash = None
 
-    fn_info = FunctionReporter(f"Deleting manifest file s3://{manifest_pointer_s3_bucket}/{manifest_pointer_s3_key}")
+    fn_info = FunctionReporter(f"Retrieving hash from manifest point s3://{manifest_pointer_s3_bucket}/{manifest_pointer_s3_key}")
+    try:
+        raw_manifest_hash = s3.get_object_as_string(s3_client, manifest_pointer_s3_bucket, manifest_pointer_s3_key)
+        fn_info.succeeded(raw_manifest_hash)
+    except Exception as ex:
+        fn_info.failed(ex)
+
+
+
+    fn_info = FunctionReporter(f"Deleting manifest pointer file s3://{manifest_pointer_s3_bucket}/{manifest_pointer_s3_key}")
     try:
         delete_response = s3.delete_object(s3_client, manifest_pointer_s3_bucket, manifest_pointer_s3_key)
         fn_info.succeeded(delete_response)
-        return True
+        deleted_manifest_pointer = True
     except Exception as ex:
         fn_info.failed(ex)
-        return False
+        deleted_manifest_pointer = False
 
 
+    raw_manifest_s3_key = f".quilt/packages/{raw_manifest_hash}"
+    fn_info = FunctionReporter(f"Deleting raw manifest file s3://{manifest_pointer_s3_bucket}/{raw_manifest_s3_key}")
+    try:
+        delete_response = s3.delete_object(s3_client, manifest_pointer_s3_bucket, raw_manifest_s3_key)
+        fn_info.succeeded(delete_response)
+        deleted_raw_manifest = True
+    except Exception as ex:
+        fn_info.failed(ex)
+        deleted_raw_manifest = False
+
+    return deleted_manifest_pointer and deleted_raw_manifest
 
 
 
@@ -296,8 +317,6 @@ def main(package_name, bucket):
         4. Reproduce the bug using quilt3 library directly
 
         5. Using normal boto3 credentials, confirm that we can delete the manifest objects (is problem key-specific?).
-           Currently this only checks if the pointer can be deleted. For completeness this should also check if the
-           underlying manifests files can be deleted
 
         6. Using s3_client from data_transfer.get_s3_client(), see if we can delete the manifest objects (is problem a
            bug in delete logic or pure permissions)
@@ -360,7 +379,6 @@ def main(package_name, bucket):
     get_info_about_quilt3_creds()
 
 
-    quit()
     header("Trying to clean up any leftover files")
     try:
         s3_client = s3.get_s3_client(use_quilt3_botocore_session=False)
@@ -375,17 +393,10 @@ def main(package_name, bucket):
         for manifest_pointer_object in s3.list_keyspace(s3_client, bucket, prefix=manifest_pointer_prefix):
             manifest_pointer_key = manifest_pointer_object["Key"]
 
+            raw_manifest_hash = None
             print(f"Trying to get contents of manifest pointer s3://{bucket}/{manifest_pointer_key}")
             try:
                 raw_manifest_hash = s3.get_object_as_string(s3_client, bucket, manifest_pointer_key)
-            except Exception as ex:
-                print("Exception occurred:", ex)
-
-            raw_manifest_key = f".quilt/packages/{raw_manifest_hash}"
-
-            print(f"Trying to delete raw_manifest: s3://{bucket}/{raw_manifest_key}")
-            try:
-                s3.delete_object(s3_client, bucket, raw_manifest_key)
             except Exception as ex:
                 print("Exception occurred:", ex)
 
@@ -394,6 +405,17 @@ def main(package_name, bucket):
                 s3.delete_object(s3_client, bucket, manifest_pointer_key)
             except Exception as ex:
                 print("Exception occurred:", ex)
+
+            if raw_manifest_hash is not None:
+                raw_manifest_key = f".quilt/packages/{raw_manifest_hash}"
+
+                print(f"Trying to delete raw_manifest: s3://{bucket}/{raw_manifest_key}")
+                try:
+                    s3.delete_object(s3_client, bucket, raw_manifest_key)
+                except Exception as ex:
+                    print("Exception occurred:", ex)
+
+
 
     except Exception as ex:
         print("Cleanup failed with exception:", ex)
