@@ -1,7 +1,5 @@
 # Debugging Package Deleting Failure
 
-Start with `quilt3 logout`
-
 ```
-
+curl https://raw.githubusercontent.com/quiltdata/debugging-scripts/master/debug.sh -o debug.sh
 ```
