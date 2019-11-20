@@ -377,7 +377,13 @@ def main(package_name, bucket):
         manifest_pointer_prefix = f".quilt/named_packages/{package_name}/"
         for manifest_pointer_object in s3.list_keyspace(s3_client, bucket, prefix=manifest_pointer_prefix):
             manifest_pointer_key = manifest_pointer_object["Key"]
-            raw_manifest_hash = s3.get_object_as_string(s3_client, bucket, manifest_pointer_key)
+
+            print(f"Trying to get contents of manifest pointer s3://{bucket}/{manifest_pointer_key}")
+            try:
+                raw_manifest_hash = s3.get_object_as_string(s3_client, bucket, manifest_pointer_key)
+            except Exception as ex:
+                print("Exception occurred:", ex)
+
             raw_manifest_key = f".quilt/packages/{raw_manifest_hash}"
 
             print(f"Trying to delete raw_manifest: s3://{bucket}/{raw_manifest_key}")
