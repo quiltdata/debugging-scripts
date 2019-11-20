@@ -281,7 +281,7 @@ def check_can_delete_manifest(s3_client, package_name, registry_name, push_dest)
 
 
 
-def main(package_name="quilt-debug/test", bucket="armand-staging-t4"):
+def main(package_name, bucket):
     """
     Debugging process:
 
@@ -366,7 +366,7 @@ def main(package_name="quilt-debug/test", bucket="armand-staging-t4"):
 
 
 
-def safe_main(package_name="quilt-debug/test", bucket="armand-staging-t4"):
+def safe_main(package_name="quilt-debug/test", bucket="armand-quilt"):
     try:
         main(package_name, bucket)
     except Exception as ex:
