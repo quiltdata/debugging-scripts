@@ -126,7 +126,7 @@ def get_info_about_key(bucket, key):
 
 
 def generate_new_package_version(package_name, registry_name, push_dest):
-    time.sleep(2) # named_packages is timestamp based - ensure that we get a fresh timestamp
+    time.sleep(1) # named_packages is timestamp based - ensure that we get a fresh timestamp
     fn_info = FunctionReporter(f"Creating package '{package_name}' in registry {registry_name}")
     try:
         pkg = quilt3.Package()
@@ -357,20 +357,20 @@ def main(package_name, bucket):
     header("Checking if boto3 with default cred provider chain can delete a manifest")
     normal_creds_can_delete = check_can_delete_manifest(s3.get_s3_client(use_quilt3_botocore_session=False),
                                                         package_name, registry_name, push_dest)
-    print("Normal creds can delete 'latest' manifest pointer file?", normal_creds_can_delete)
+    print("Normal creds can delete raw manifest and manifest pointer?", normal_creds_can_delete)
 
 
     header("Checking if s3_client from quilt3.data_transfer.create_s3_client() can delete a manifest")
     quilt3_create_s3_client_can_delete = check_can_delete_manifest(quilt3.data_transfer.create_s3_client(),
                                                                    package_name, registry_name, push_dest)
-    print("S3 client from quilt3.data_transfer.create_s3_client() can delete 'latest' manifest pointer file?",
+    print("S3 client from quilt3.data_transfer.create_s3_client() can delete raw manifest and manifest pointer?",
           quilt3_create_s3_client_can_delete)
 
 
     header("Checking if s3_client from quilt3.session.create_botocore_session() can delete a manifest")
     quilt3_botocore_session_can_delete = check_can_delete_manifest(s3.get_s3_client(use_quilt3_botocore_session=True),
                                                                    package_name, registry_name, push_dest)
-    print("S3 client from quilt3.session.create_botocore_session() can delete 'latest' manifest pointer file?",
+    print("S3 client from quilt3.session.create_botocore_session() can delete raw manifest and manifest pointer?",
           quilt3_botocore_session_can_delete)
 
 
