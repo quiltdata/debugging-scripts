@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 quilt3 logout
 mkdir -p
 echo "QUILT-DEBUG: Cloning debugger script repo"
