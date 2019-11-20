@@ -1,4 +1,5 @@
 import json
+import os
 import random
 import sys
 import time
@@ -448,4 +449,5 @@ def safe_main(package_name="quilt-debug/test", bucket="armand-quilt"):
 
 
 if __name__ == '__main__':
-    safe_main()
+    bucket = os.environ["QUILT_DEBUG_BUCKET"]
+    safe_main(bucket=bucket)
