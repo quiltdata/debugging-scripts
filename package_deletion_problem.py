@@ -246,12 +246,12 @@ def repro(package_name, registry_name, push_dest):
 
     generate_new_package_version(package_name, registry_name, push_dest)
 
+    fn_info = FunctionReporter(f"Deleting package {package_name} from registry {registry_name}")
     try:
-        print("Delete package starting")
         quilt3.delete_package(package_name, registry_name)
-        print("Deleted package without any exceptions - COULD NOT REPRO")
+        fn_info.succeeded(None, additional_detail="COULD NOT REPRO")
     except Exception as ex:
-        print("Exception occurred during delete package:", ex)
+        fn_info.failed(ex)
 
 
 
