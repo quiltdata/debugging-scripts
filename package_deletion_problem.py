@@ -364,6 +364,7 @@ def main(package_name, bucket):
     get_info_about_quilt3_creds()
 
 
+    quit()
     header("Trying to clean up any leftover files")
     try:
         s3_client = s3.get_s3_client(use_quilt3_botocore_session=False)
