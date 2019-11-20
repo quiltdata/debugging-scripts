@@ -132,7 +132,6 @@ def generate_new_package_version(package_name, registry_name, push_dest):
         pkg.push(package_name, registry=registry_name, dest=push_dest)
         fn_info.succeeded(output=None)
     except Exception as ex:
-        traceback.print_stack()
         fn_info.failed(ex)
 
 
